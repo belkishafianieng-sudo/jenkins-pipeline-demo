@@ -1,21 +1,45 @@
 pipeline {
     agent any
 
+    environment {
+        NEW_VERSION = '1.3.0'
+        SERVER_CREDENTIALS = credentials('123')
+    }
+
     stages {
-        stage('build') {
+        stage('Build') {
             steps {
-                echo 'building the application...'
+                echo 'Building the application...'
+                echo "building version ${NEW_VERSION}"
             }
         }
-        stage('test') {
+        stage('Test') {
+            when {
+                expression {
+                    env.BRANCH_NAME == 'dev' || env.BRANCH_NAME == 'main'
+                }
+            }
             steps {
-                echo 'testing the application...'
+                echo 'Testing the application...'
             }
         }
-        stage('deploy') {
+        stage('Deploy') {
             steps {
-                echo 'deploying the application...'
+                echo 'Deploying application...'
+                echo "user = ${SERVER_CREDENTIALS_USR}"
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Ce bloc s exécute toujours'
+        }
+        success {
+            echo 'Build réussi'
+        }
+        failure {
+            echo 'Build échoué'
         }
     }
 }
