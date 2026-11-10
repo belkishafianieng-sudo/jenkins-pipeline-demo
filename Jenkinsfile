@@ -28,7 +28,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'mvn --version'
+                bat 'mvn --version'
                 script {
                     gscript.buildApp()
                 }
