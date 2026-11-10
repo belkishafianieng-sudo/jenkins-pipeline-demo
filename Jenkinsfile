@@ -1,32 +1,55 @@
+def gscript
+
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven'
+    }
+
     environment {
         NEW_VERSION = '1.3.0'
-        SERVER_CREDENTIALS = credentials('123')
+        SERVER_CREDENTIALS = credentials('server-credentials')
+    }
+
+    parameters {
+        string(name: 'VERSION', defaultValue: '1.0.0', description: 'Version à déployer')
+        choice(name: 'ENV', choices: ['dev', 'staging', 'prod'], description: 'Environnement')
+        booleanParam(name: 'executeTests', defaultValue: true, description: 'Lancer les tests ?')
     }
 
     stages {
+        stage('Load Script') {
+            steps {
+                script {
+                    gscript = load 'script.groovy'
+                }
+            }
+        }
         stage('Build') {
             steps {
-                echo 'Building the application...'
-                echo "building version ${NEW_VERSION}"
+                sh 'mvn --version'
+                script {
+                    gscript.buildApp()
+                }
             }
         }
         stage('Test') {
             when {
-                expression {
-                    env.BRANCH_NAME == 'dev' || env.BRANCH_NAME == 'main'
-                }
+                expression { params.executeTests == true }
             }
             steps {
-                echo 'Testing the application...'
+                script {
+                    gscript.testApp()
+                }
             }
         }
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
                 echo "user = ${SERVER_CREDENTIALS_USR}"
+                script {
+                    gscript.deployApp(params.VERSION, params.ENV)
+                }
             }
         }
     }
